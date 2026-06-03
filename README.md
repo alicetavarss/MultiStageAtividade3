@@ -35,7 +35,7 @@ Estágio 2: Produção (production)
 
 ## 1. Construir a Imagem Docker (Build)
 
-`docker build -t minha-app-react:latest .
+`docker build -t minha-app-react:latest . `
 
 Este comando lê as instruções do Dockerfile, executa o build intermediário do Vite e gera a imagem otimizada com a tag especificada:
 
