@@ -112,10 +112,10 @@ Para interromper o funcionamento do container e removê-lo da memória, foi util
 ## Perguntas 
 
 ### 1. Qual é o benefício de copiar package.json e package-lock.json antes do restante do código-fonte? Como isso se relaciona com o sistema de cache de camadas do Docker?
-**Resposta:** O Docker salva cada comando em camadas de cache. Como o código muda muito e as dependências mudam raramente, copiar os arquivos de configuração primeiro garante que o comando pesado `npm ci` seja reaproveitado do cache. Isso evita reinstalar todas as dependências do zero a cada alteração simples no código, acelerando o build.
+O Docker salva cada comando em camadas de cache. Como o código muda muito e as dependências mudam raramente, copiar os arquivos de configuração primeiro garante que o comando pesado `npm ci` seja reaproveitado do cache. Isso evita reinstalar todas as dependências do zero a cada alteração simples no código, acelerando o build.
 
 ### 2. O que aconteceria com o tamanho final da imagem se utilizássemos um único estágio com node:20 e simplesmente copiássemos os arquivos estáticos para a pasta do Nginx dentro da mesma imagem?
-**Resposta:** A imagem final ficaria gigante (geralmente maior que 1 GB). Ela guardaria desnecessariamente todo o ambiente do Node.js, códigos originais e a pasta `node_modules`, que são inúteis em produção, onde apenas os arquivos compilados são necessários.
+A imagem final ficaria gigante (geralmente maior que 1 GB). Ela guardaria desnecessariamente todo o ambiente do Node.js, códigos originais e a pasta `node_modules`, que são inúteis em produção, onde apenas os arquivos compilados são necessários.
 
 ### 3. O Nginx precisa do Node.js instalado para servir os arquivos estáticos da aplicação React? Justifique sua resposta em relação ao conceito de multi-stage build.
-**Resposta:** Não precisa, pois o React roda direto no navegador do cliente. O Node.js serve apenas na etapa inicial para gerar os arquivos estáticos. Com o **multi-stage build**, usamos o Node.js como uma "fábrica" temporária no primeiro estágio e copiamos apenas o resultado final (`HTML`, `CSS`, `JS`) para o Nginx, descartando o Node.js completamente da imagem de produção.
+Não precisa, pois o React roda direto no navegador do cliente. O Node.js serve apenas na etapa inicial para gerar os arquivos estáticos. Com o **multi-stage build**, usamos o Node.js como uma "fábrica" temporária no primeiro estágio e copiamos apenas o resultado final (`HTML`, `CSS`, `JS`) para o Nginx, descartando o Node.js completamente da imagem de produção.
