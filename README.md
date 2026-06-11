@@ -8,34 +8,53 @@ O arquivo Dockerfile foi construído em dois estágios distintos para garantir o
 
 Estágio 1: Build (builder)
 
-    Imagem base utilizada: node:20-alpine
+```Dockerfile
+ #Imagem base utilizada: node:20-alpine
+FROM node:20-alpine AS builder
 
-    Diretório de trabalho configurado: /app
+ #Diretório de trabalho configurado: /app
+WORKDIR /app
 
-    Otimização de cache: Cópia dos arquivos package.json e package-lock.json realizada antes do restante do código
+# Otimização de cache: Cópia dos arquivos package.json e package-lock.json realizada antes do restante do código
+COPY package.json package-lock.json ./
 
-    Instalação de dependências limpa: Executada através do comando npm ci
+# Instalação de dependências limpa: Executada através do comando npm ci
+RUN npm ci
 
-    Cópia do restante do código-fonte da aplicação
+#Cópia do restante do código-fonte da aplicação
+COPY . .
 
-    Geração dos arquivos de produção: Executado através do comando npm run build
+#Geração dos arquivos de produção: Executado através do comando npm run build
+RUN npm run build
+```
 
 Estágio 2: Produção (production)
 
-    Imagem base utilizada: nginx:stable-alpine
+```Dockerfile
 
-    Transferência de arquivos: Cópia da pasta de build (dist/) do estágio anterior diretamente para o diretório padrão do Nginx (/usr/share/nginx/html)
 
-    Porta exposta: Porta 80
+#Imagem base utilizada: nginx:stable-alpine
+FROM nginx:stable-alpine AS production
 
-    Comando de inicialização configurado: nginx -g 'daemon off;'
+#Transferência de arquivos: Cópia da pasta de build (dist/) do estágio anterior diretamente para o diretório padrão do Nginx (/usr/share/nginx/html)
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+#Porta exposta: Porta 80
+EXPOSE 80
+
+#Comando de inicialização configurado: nginx -g 'daemon off;'
+CMD ["nginx", "-g", "daemon off;"]
+
+```
+
+
 
 
 # Como executar: 
 
 ## 1. Construir a Imagem Docker (Build)
 
-`docker build -t minha-app-react:latest . `
+`docker build -t minha-app-react:latest .
 
 Este comando lê as instruções do Dockerfile, executa o build intermediário do Vite e gera a imagem otimizada com a tag especificada:
 
@@ -112,10 +131,10 @@ Para interromper o funcionamento do container e removê-lo da memória, foi util
 ## Perguntas 
 
 ### 1. Qual é o benefício de copiar package.json e package-lock.json antes do restante do código-fonte? Como isso se relaciona com o sistema de cache de camadas do Docker?
-O Docker salva cada comando em camadas de cache. Como o código muda muito e as dependências mudam raramente, copiar os arquivos de configuração primeiro garante que o comando pesado `npm ci` seja reaproveitado do cache. Isso evita reinstalar todas as dependências do zero a cada alteração simples no código, acelerando o build.
+**Resposta:** O Docker salva cada comando em camadas de cache. Como o código muda muito e as dependências mudam raramente, copiar os arquivos de configuração primeiro garante que o comando pesado `npm ci` seja reaproveitado do cache. Isso evita reinstalar todas as dependências do zero a cada alteração simples no código, acelerando o build.
 
 ### 2. O que aconteceria com o tamanho final da imagem se utilizássemos um único estágio com node:20 e simplesmente copiássemos os arquivos estáticos para a pasta do Nginx dentro da mesma imagem?
-A imagem final ficaria gigante (geralmente maior que 1 GB). Ela guardaria desnecessariamente todo o ambiente do Node.js, códigos originais e a pasta `node_modules`, que são inúteis em produção, onde apenas os arquivos compilados são necessários.
+**Resposta:** A imagem final ficaria gigante (geralmente maior que 1 GB). Ela guardaria desnecessariamente todo o ambiente do Node.js, códigos originais e a pasta `node_modules`, que são inúteis em produção, onde apenas os arquivos compilados são necessários.
 
 ### 3. O Nginx precisa do Node.js instalado para servir os arquivos estáticos da aplicação React? Justifique sua resposta em relação ao conceito de multi-stage build.
-Não precisa, pois o React roda direto no navegador do cliente. O Node.js serve apenas na etapa inicial para gerar os arquivos estáticos. Com o **multi-stage build**, usamos o Node.js como uma "fábrica" temporária no primeiro estágio e copiamos apenas o resultado final (`HTML`, `CSS`, `JS`) para o Nginx, descartando o Node.js completamente da imagem de produção.
+**Resposta:** Não precisa, pois o React roda direto no navegador do cliente. O Node.js serve apenas na etapa inicial para gerar os arquivos estáticos. Com o **multi-stage build**, usamos o Node.js como uma "fábrica" temporária no primeiro estágio e copiamos apenas o resultado final (`HTML`, `CSS`, `JS`) para o Nginx, descartando o Node.js completamente da imagem de produção.
