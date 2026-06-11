@@ -9,10 +9,10 @@ O arquivo Dockerfile foi construído em dois estágios distintos para garantir o
 Estágio 1: Build (builder)
 
 ```Dockerfile
- #Imagem base utilizada: node:20-alpine
+#Imagem base utilizada: node:20-alpine
 FROM node:20-alpine AS builder
 
- #Diretório de trabalho configurado: /app
+#Diretório de trabalho configurado: /app
 WORKDIR /app
 
 # Otimização de cache: Cópia dos arquivos package.json e package-lock.json realizada antes do restante do código
